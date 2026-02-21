@@ -1,8 +1,43 @@
 # Argo GitOps NestJS
 
-![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white) ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=white) ![Argo CD](https://img.shields.io/badge/Argo_CD-EF7B4D?logo=argo&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=githubactions&logoColor=white)
+![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=white)
+![Argo CD](https://img.shields.io/badge/Argo_CD-EF7B4D?logo=argo&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=githubactions&logoColor=white)
 
 > End-to-end GitOps pipeline using Argo CD to deploy a containerized NestJS application on Kubernetes with automated CI/CD, self-healing, and version tracking.
+
+---
+
+## 🏗️ Architecture
+
+```
+Developer
+   │
+   ▼
+GitHub Repository
+   │
+   ▼
+GitHub Actions (CI)
+- Build Docker image
+- Push to Docker Hub
+- Update k8s/base deployment
+   │
+   ▼
+Argo CD (GitOps)
+- Watches Git repository
+- Applies Kustomize overlay
+- Self-healing & pruning enabled
+   │
+   ▼
+Kubernetes (Minikube)
+- Deployment
+- Service
+- Ingress
+- HPA
+- ConfigMap / SealedSecret
+```
 
 ---
 
@@ -13,7 +48,7 @@ This project demonstrates a complete GitOps workflow:
 1. Code pushed to GitHub
 2. GitHub Actions builds Docker image
 3. Image pushed to Docker Hub
-4. Kubernetes manifests updated automatically
+4. Kubernetes manifests updated automatically (`k8s/base`)
 5. Argo CD detects changes and syncs the cluster
 6. Application updates automatically
 
@@ -23,15 +58,16 @@ The running application displays the **deployed commit version**.
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Application | NestJS |
-| Containerization | Docker |
-| Cluster | Kubernetes (Minikube) |
-| GitOps | Argo CD |
-| CI/CD | GitHub Actions |
-| Config | ConfigMap & Secret |
-| Scaling | Horizontal Pod Autoscaler (HPA) |
+| Layer                    | Technology                      |
+| ------------------------ | ------------------------------- |
+| Application              | NestJS                          |
+| Containerization         | Docker                          |
+| Cluster                  | Kubernetes (Minikube)           |
+| GitOps                   | Argo CD                         |
+| CI/CD                    | GitHub Actions                  |
+| Configuration            | ConfigMap & SealedSecret        |
+| Scaling                  | Horizontal Pod Autoscaler (HPA) |
+| Configuration Management | Kustomize                       |
 
 ---
 
@@ -40,10 +76,23 @@ The running application displays the **deployed commit version**.
 ```
 argo-gitops-nestjs/
 │
-├── app/            # NestJS application + Dockerfile
-├── k8s/            # Kubernetes manifests
-├── argocd/         # Argo CD Application definition
-├── .github/        # GitHub Actions workflow
+├── app/                 # NestJS application + Dockerfile
+├── k8s/
+│   ├── base/            # Base Kubernetes resources
+│   │   ├── deployment.yaml
+│   │   ├── service.yaml
+│   │   ├── configmap.yaml
+│   │   ├── ingress.yaml
+│   │   ├── hpa.yaml
+│   │   ├── sealedsecret.yaml
+│   │   └── kustomization.yaml
+│   │
+│   └── overlays/
+│       └── dev/         # Environment-specific configuration
+│           └── kustomization.yaml
+│
+├── argocd/              # Argo CD Application definition
+├── .github/             # GitHub Actions workflow
 └── README.md
 ```
 
@@ -54,9 +103,10 @@ argo-gitops-nestjs/
 ```
 Developer Push → GitHub Actions → Docker Hub
                       ↓
-                Update k8s manifests
+          Update k8s/base deployment
                       ↓
-                   Argo CD
+                 Argo CD
+            (Kustomize overlay)
                       ↓
                   Kubernetes
 ```
@@ -65,11 +115,14 @@ Developer Push → GitHub Actions → Docker Hub
 
 ## ✨ Features
 
-- ✅ Automated image build and push
-- ✅ Automatic manifest update
-- ✅ Argo CD auto-sync
-- ✅ Self-healing & pruning enabled
+- ✅ Automated Docker image build and push
+- ✅ Automatic manifest update (GitOps)
+- ✅ Argo CD auto-sync with self-healing & pruning
+- ✅ Kustomize base + overlay structure
 - ✅ Runtime version visibility
+- ✅ Sealed Secrets for secure configuration
+- ✅ Horizontal Pod Autoscaler (HPA)
+- ✅ Ingress support
 
 ---
 
@@ -102,11 +155,11 @@ kubectl get pods -n argocd
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
-Open **https://localhost:8080** in your browser.
+Open **https://localhost:8080**
 
-| Field | Value |
-|---|---|
-| Username | `admin` |
+| Field    | Value                 |
+| -------- | --------------------- |
+| Username | `admin`               |
 | Password | Run the command below |
 
 ```bash
@@ -141,42 +194,46 @@ On every push to `main`, the pipeline automatically:
 1. Builds a Docker image
 2. Tags it with the commit SHA
 3. Pushes it to Docker Hub
-4. Updates `k8s/deployment.yaml` with the new image tag
-5. Commits the manifest changes back to the repo
-6. Argo CD detects the diff and syncs the cluster
+4. Updates `k8s/base/deployment.yaml`
+5. Commits the manifest changes back to the repository
+6. Argo CD detects the change and syncs the cluster
 
 ---
 
 ## ☸️ Kubernetes Features
 
 - **Deployment** with resource limits
-- **ConfigMap** and **Secret** integration
+- **ConfigMap** configuration
+- **SealedSecret** for encrypted secrets
 - **NodePort** Service
+- **Ingress** for external access
 - **Horizontal Pod Autoscaler (HPA)**
+- **Kustomize** environment overlays
 - **Environment-based** version injection
 
 ---
 
 ## 💡 Why This Project?
 
-This project demonstrates real-world DevOps practices including:
+This project demonstrates real-world DevOps practices:
 
-- Real GitOps workflow
+- GitOps workflow with Argo CD
 - CI/CD automation
 - Kubernetes production patterns
+- Environment management with Kustomize
+- Secure secret management
 - Deployment traceability
 - Infrastructure as Code
-- DevOps best practices
 
 ---
 
 ## 📈 Future Improvements
 
-- [ ] Kustomize overlays (dev / staging / prod)
-- [ ] Ingress with custom domain
+- [ ] Production environment overlay
 - [ ] Helm chart packaging
 - [ ] Monitoring with Prometheus + Grafana
-- [ ] Image automation without manual manifest edits
+- [ ] Argo CD Image Updater (true GitOps image automation)
+- [ ] Observability (logs & metrics)
 
 ---
 
