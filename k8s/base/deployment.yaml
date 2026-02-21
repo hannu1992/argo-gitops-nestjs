@@ -16,13 +16,13 @@ spec:
     spec:
       containers:
         - name: app
-          image: hannumannamdev1992/nest-gitops:latest
+          image: hannumannamdev1992/nest-gitops:IMAGE_TAG
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
             - name: IMAGE_TAG
-              value: "latest"
+              value: "IMAGE_TAG"
           envFrom:
             - configMapRef:
                 name: nest-gitops-config
