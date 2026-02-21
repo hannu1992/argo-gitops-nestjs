@@ -23,6 +23,8 @@ spec:
           env:
             - name: IMAGE_TAG
               value: "IMAGE_TAG"
+            - name: NODE_ENV
+              value: "production"
           envFrom:
             - configMapRef:
                 name: nest-gitops-config
