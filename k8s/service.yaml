@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nest-gitops-svc
+spec:
+  selector:
+    app: nest-gitops
+  ports:
+    - port: 80
+      targetPort: 3000
+  type: NodePort

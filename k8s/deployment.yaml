@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nest-gitops
+  labels:
+    app: nest-gitops
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nest-gitops
+  template:
+    metadata:
+      labels:
+        app: nest-gitops
+    spec:
+      containers:
+        - name: app
+          image: hannumannamdev1992/nest-gitops:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: IMAGE_TAG
+              value: "latest"
+          envFrom:
+            - configMapRef:
+                name: nest-gitops-config
+            - secretRef:
+                name: nest-gitops-secret
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

@@ -1,0 +1,43 @@
+name: CI - Build & GitOps Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "k8s/**"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push Docker image
+        run: |
+          docker build -t hannumannamdev1992/nest-gitops:${IMAGE_TAG} ./app
+          docker push hannumannamdev1992/nest-gitops:${IMAGE_TAG}
+
+      - name: Update image tag in Kubernetes manifest
+        run: |
+          sed -i "s|image: .*|image: hannumannamdev1992/nest-gitops:${IMAGE_TAG}|" k8s/deployment.yaml
+          sed -i "s|value: \".*\"|value: \"${IMAGE_TAG}\"|" k8s/deployment.yaml
+
+      - name: Commit and push manifest change
+        run: |
+          git config user.name "github-actions"
+          git config user.email "ci@github.com"
+          git add k8s/deployment.yaml
+          git commit -m "Update image to ${IMAGE_TAG}"
+          git push
