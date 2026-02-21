@@ -16,15 +16,15 @@ spec:
     spec:
       containers:
         - name: app
-          image: hannumannamdev1992/nest-gitops:IMAGE_TAG
+          image: hannumannamdev1992/nest-gitops:0c2edd3
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
             - name: IMAGE_TAG
-              value: "IMAGE_TAG"
+              value: "0c2edd3"
             - name: NODE_ENV
-              value: "production"
+              value: "0c2edd3"
           envFrom:
             - configMapRef:
                 name: nest-gitops-config
